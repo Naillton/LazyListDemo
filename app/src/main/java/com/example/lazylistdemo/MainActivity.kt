@@ -1,17 +1,20 @@
 package com.example.lazylistdemo
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -32,6 +35,7 @@ import androidx.compose.ui.unit.dp
 import com.example.lazylistdemo.ui.theme.LazyListDemoTheme
 
 class MainActivity : ComponentActivity() {
+    @SuppressLint("SuspiciousIndentation")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
@@ -76,6 +80,7 @@ class MainActivity : ComponentActivity() {
  * fazem isso!
  */
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun MainScreen(array: Array<String>) {
      // acessando contexto local da aplicacao e guardando em uma variavel
@@ -89,6 +94,9 @@ fun MainScreen(array: Array<String>) {
             Toast.LENGTH_LONG
         ).show()
     }
+
+    // agrupando itens
+    val groupedItems = array.groupBy { it.substringBefore(' ') }
     Box(
         Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
@@ -99,8 +107,20 @@ fun MainScreen(array: Array<String>) {
             }
         }*/
         LazyRow {
-            items(array) {
-                CardElement(text = it, onClick = onTouch)
+            groupedItems.forEach { (names: String) ->
+                stickyHeader {
+                    Text(
+                        text = names,
+                        color = Color.White,
+                        modifier = Modifier
+                            .background(Color.Gray)
+                            .padding(5.dp)
+                            .fillMaxWidth()
+                    )
+                }
+                items(array) {
+                    CardElement(text = it, onClick = onTouch)
+                }
             }
         }
 
