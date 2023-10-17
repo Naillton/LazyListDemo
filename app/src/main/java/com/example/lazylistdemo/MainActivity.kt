@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -20,12 +21,17 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -33,6 +39,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.lazylistdemo.ui.theme.LazyListDemoTheme
+import kotlinx.coroutines.launch
+import java.util.Collections
 
 class MainActivity : ComponentActivity() {
     @SuppressLint("SuspiciousIndentation")
@@ -45,7 +53,7 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                val items: Array<String> = arrayOf(
+                val items: MutableList<String> = arrayListOf(
                     "Zezin",
                     "Luizin",
                     "Marquin",
@@ -82,7 +90,7 @@ class MainActivity : ComponentActivity() {
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun MainScreen(array: Array<String>) {
+fun MainScreen(array: MutableList<String>) {
      // acessando contexto local da aplicacao e guardando em uma variavel
     val context = LocalContext.current
 
@@ -96,18 +104,20 @@ fun MainScreen(array: Array<String>) {
     }
 
     // agrupando itens
-    val groupedItems = array.groupBy { it.substringBefore(' ') }
+    // val groupedItems = array.groupBy { it.substringBefore(' ') }
+    val ordenedItems = array.sorted()
+
+    // criando estado da lista e corotinas para acessar posicoes diferentes da lista
+    val listState = rememberLazyListState()
+    val coroutineScope = rememberCoroutineScope()
+    val displayButton = listState.firstVisibleItemIndex > 5
     Box(
         Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
     ) {
         /*LazyColumn {
-            items(array) {model ->
-                CardElement(text = model, onClick = onTouch)
-            }
-        }*/
-        LazyRow {
-            groupedItems.forEach { (names: String) ->
+        groupedItems.forEach { (names: String) ->
+                // usando stickyHeader para criar um cabecalho de elementos
                 stickyHeader {
                     Text(
                         text = names,
@@ -118,12 +128,42 @@ fun MainScreen(array: Array<String>) {
                             .fillMaxWidth()
                     )
                 }
-                items(array) {
+            items(array) {model ->
+                CardElement(text = model, onClick = onTouch)
+            }
+        }*/
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            LazyRow(
+                state = listState
+            ) {
+                items(ordenedItems) {
                     CardElement(text = it, onClick = onTouch)
                 }
             }
-        }
+            // criando visibilidade de animacao usando o display button para que o botao
+            // apareca apos o determiando numero de elementos
+            AnimatedVisibility(
+                visible = displayButton) {
+                    // botao criado para voltar ao topo da lista
+                    OutlinedButton(onClick = {
+                        coroutineScope.launch {
+                            listState.scrollToItem(0)
+                        }
+                    },
+                        border = BorderStroke(1.dp, Color.Gray),
+                        shape = RoundedCornerShape(50),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = Color.DarkGray),
+                        modifier = Modifier.padding(5.dp)) {
 
+                        Text(
+                            text = "top"
+                        )
+                    }
+            }
+        }
     }
 }
 
@@ -158,7 +198,7 @@ private fun CardElement(text: String, onClick: (String) -> Unit) {
 @Composable
 fun GreetingPreview() {
     LazyListDemoTheme {
-        val items: Array<String> = arrayOf(
+        val items: MutableList<String> = arrayListOf(
             "Zezin",
             "Luizin",
             "Marquin",
